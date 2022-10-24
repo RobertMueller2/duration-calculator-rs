@@ -1,0 +1,13 @@
+[package]
+name = "duration-calculator-rs"
+version = "0.1.1"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+atty = "0.2.14"
+chrono = "0.4"
+debug_print = "1.0.0"
+lazy_static = "1.4.0"
+regex = "1.8.1"
