@@ -69,18 +69,25 @@ impl fmt::Display for DisplayableDuration {
             deleting this from working memory and hopefully never have to look again.
             */
             Ordering::Greater => -1,
-            _ => 1 
+            _ => 1,
         };
 
         /*  if the duration is negative, display sign prefixing the whole duration,
-            but keep the portions positive. -2h-05m-20s looks odd, doesn't it?
-         */
+           but keep the portions positive. -2h-05m-20s looks odd, doesn't it?
+        */
         let n = sgn * self.0.num_seconds();
         let hours = n / 3600;
         let minutes = (n % 3600) / 60;
         let seconds = n % 60;
 
-        write!(f, "{}{}h {:02}m {:02}s", if sgn < 0 { "-" } else { "" }, hours, minutes, seconds)
+        write!(
+            f,
+            "{}{}h {:02}m {:02}s",
+            if sgn < 0 { "-" } else { "" },
+            hours,
+            minutes,
+            seconds
+        )
     }
 }
 
