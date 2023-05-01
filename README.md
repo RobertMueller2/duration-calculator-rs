@@ -75,6 +75,10 @@ Now I mark the last 5 lines, use `:'<,'>DurationCalc +21h10m13s` and I get
 43h38m43s
 ```
 
+![Use case demonstration](/img/output1.gif?raw=true)
+
+p.S.: I'm not really using this for work, although the example might suggest otherwise. For work I'm happy to recommend [Timesheet](https://timesheet.io/). ;)
+
 ## Disclaimer
 
 I got some help from ChatGPT to add the annotations and tests. Should they not be correct I might notice at some point. ;) Oh, and parts of the readme.
