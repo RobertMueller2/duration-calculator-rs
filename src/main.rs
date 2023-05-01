@@ -1,3 +1,25 @@
+/// This module provides a command-line tool for parsing and manipulating
+/// duration strings. It supports input via command-line arguments as well
+/// as standard input, and can perform arithmetic on durations.
+///
+/// # Examples
+///
+/// ```fish
+/// $ ./duration-calculator-rs "3d 20h 10m 15s"
+/// 92h10m15s
+///
+/// $ echo "2d 5h" | ./duration-calculator-rs
+/// 53h0m0s
+///
+/// $ ./duration-calculator-rs "-1y 3h 40m"
+/// -364d20h20m0s
+/// 
+/// Process both stdin and arguments:
+///  $  echo -e "24h\n24m" | ./duration-calculator-rs 25m
+/// 24h24m0s
+/// 24h49m0s
+/// ```
+
 use std::env;
 use std::io::{self, BufRead};
 use std::str::FromStr;
@@ -38,9 +60,13 @@ fn main() {
     }
 }
 
+/// A trait for printing durations in a human-readable format.
+/* FIXME: formatting */
 trait DurationPrint {
+    /// Prints the duration in a human-readable format.
     fn print(self);
 }
+
 
 impl DurationPrint for Duration {
     fn print(mut self) {
@@ -57,8 +83,12 @@ impl DurationPrint for Duration {
     }
 }
 
+/// A trait for performing arithmetic operations on durations not already covered in the standard
 trait DurationCalculate {
+    /// Adds two durations and returns the result or maximum value for overflow
     fn saturated_add(&self, rhs: &Self) -> Self;
+
+    /// Adds two durations and returns the result or minimum value for overflow
     fn saturated_sub(&self, rhs: &Self) -> Self;
 }
 
@@ -72,8 +102,12 @@ impl DurationCalculate for Duration {
     }
 }
 
+/// A trait for parsing duration strings.
 trait DurationParse {
+    /// Parses a "line" of a duration string and returns a `Duration` or `None` if the input is invalid.
     fn from_str(input: &str) -> Option<Duration>;
+
+    /// Converts the smallest token (e.g. "5m", "4s") to a `Duration` object or `None` for invalid input.
     fn token_to_duration(count: i64, unit: &str) -> Option<Duration>;
 }
 
@@ -83,10 +117,10 @@ impl DurationParse for Duration {
             static ref LINE_PATTERN: Regex =
                 Regex::new(r#"^(?:\s*[+-]\s*(?:\d+\s*(?:y|d|h|m|s)\s*)+)+$"#).unwrap();
             static ref DURATION_COMPOSITE_PATTERN: Regex =
-                Regex::new(r#"(?P<sign>[+-])\s*(?P<duration>(?:(?:\d+)(?:y|d|h|m|s))+)"#)
+                Regex::new(r#"(?P<sign>[+-])\s*(?P<duration>\s*(?:\d+\s*(?:y|d|h|m|s)\s*)+)"#)
                     .unwrap();
             static ref DURATION_PATTERN: Regex =
-                Regex::new(r#"(?P<count>\d+)(?P<unit>y|d|h|m|min|s)"#).unwrap();
+                Regex::new(r#"(?P<count>\d+)\s*(?P<unit>y|d|h|m|min|s)"#).unwrap();
         }
 
         let mut duration = Duration::zero();
@@ -143,4 +177,62 @@ impl DurationParse for Duration {
             _ => None,
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_token_to_duration() {
+        let cases = vec![
+            (5, "y", Duration::days(365 * 5)),
+            (2, "d", Duration::days(2)),
+            (3, "h", Duration::hours(3)),
+            (30, "m", Duration::minutes(30)),
+            (10, "s", Duration::seconds(10)),
+            (0, "y", Duration::zero()),
+        ];
+
+        for (count, unit, expected) in cases {
+            let result = Duration::token_to_duration(count, unit);
+            assert_eq!(result, Some(expected));
+        }
+    }
+
+    #[test]
+    fn test_from_str() {
+        let cases = vec![
+            ("", Duration::zero()),
+            ("3d 20h 10m 15s", Duration::days(3) + Duration::hours(20) + Duration::minutes(10) + Duration::seconds(15)),
+            ("+2d 5h", Duration::days(2) + Duration::hours(5)),
+            ("-1y 3h + 40m", Duration::days(-365) - Duration::hours(3) + Duration::minutes(40)),
+            ("+3h-2m", Duration::hours(3) - Duration::minutes(2)),
+            ("2d 5h # Comment", Duration::days(2) + Duration::hours(5)),
+            ("-2d 5h # Comment", -Duration::days(2) - Duration::hours(5)),
+        ];
+
+        for (input, expected) in cases {
+            let result = Duration::from_str(input).unwrap();
+            assert_eq!(result, expected);
+        }
+    }
+
+    #[test]
+    fn test_saturated_add_and_sub() {
+        let cases = vec![
+            (Duration::days(5), Duration::days(3), Duration::days(8), Duration::days(2)),
+            (Duration::hours(5), Duration::hours(3), Duration::hours(8), Duration::hours(2)),
+            (Duration::minutes(30), Duration::minutes(20), Duration::minutes(50), Duration::minutes(10)),
+        ];
+
+        for (a, b, expected_add, expected_sub) in cases {
+            let result_add = a.saturated_add(&b);
+            let result_sub = a.saturated_sub(&b);
+            assert_eq!(result_add, expected_add);
+            assert_eq!(result_sub, expected_sub);
+        }
+    }
+
+
 }
