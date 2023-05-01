@@ -13,13 +13,12 @@
 ///
 /// $ ./duration-calculator-rs "-1y 3h 40m"
 /// -364d20h20m0s
-/// 
+///
 /// Process both stdin and arguments:
 ///  $  echo -e "24h\n24m" | ./duration-calculator-rs 25m
 /// 24h24m0s
 /// 24h49m0s
 /// ```
-
 use std::env;
 use std::io::{self, BufRead};
 use std::str::FromStr;
@@ -34,7 +33,7 @@ fn main() {
     let arg_str = args[1..].join(" ");
 
     let mut d = Duration::zero();
-    let mut printed :bool = false;
+    let mut printed: bool = false;
 
     // read stdin only if there is a redirect
     if atty::isnt(atty::Stream::Stdin) {
@@ -66,7 +65,6 @@ trait DurationPrint {
     /// Prints the duration in a human-readable format.
     fn print(self);
 }
-
 
 impl DurationPrint for Duration {
     fn print(mut self) {
@@ -204,9 +202,18 @@ mod tests {
     fn test_from_str() {
         let cases = vec![
             ("", Duration::zero()),
-            ("3d 20h 10m 15s", Duration::days(3) + Duration::hours(20) + Duration::minutes(10) + Duration::seconds(15)),
+            (
+                "3d 20h 10m 15s",
+                Duration::days(3)
+                    + Duration::hours(20)
+                    + Duration::minutes(10)
+                    + Duration::seconds(15),
+            ),
             ("+2d 5h", Duration::days(2) + Duration::hours(5)),
-            ("-1y 3h + 40m", Duration::days(-365) - Duration::hours(3) + Duration::minutes(40)),
+            (
+                "-1y 3h + 40m",
+                Duration::days(-365) - Duration::hours(3) + Duration::minutes(40),
+            ),
             ("+3h-2m", Duration::hours(3) - Duration::minutes(2)),
             ("2d 5h # Comment", Duration::days(2) + Duration::hours(5)),
             ("-2d 5h # Comment", -Duration::days(2) - Duration::hours(5)),
@@ -221,9 +228,24 @@ mod tests {
     #[test]
     fn test_saturated_add_and_sub() {
         let cases = vec![
-            (Duration::days(5), Duration::days(3), Duration::days(8), Duration::days(2)),
-            (Duration::hours(5), Duration::hours(3), Duration::hours(8), Duration::hours(2)),
-            (Duration::minutes(30), Duration::minutes(20), Duration::minutes(50), Duration::minutes(10)),
+            (
+                Duration::days(5),
+                Duration::days(3),
+                Duration::days(8),
+                Duration::days(2),
+            ),
+            (
+                Duration::hours(5),
+                Duration::hours(3),
+                Duration::hours(8),
+                Duration::hours(2),
+            ),
+            (
+                Duration::minutes(30),
+                Duration::minutes(20),
+                Duration::minutes(50),
+                Duration::minutes(10),
+            ),
         ];
 
         for (a, b, expected_add, expected_sub) in cases {
@@ -233,6 +255,4 @@ mod tests {
             assert_eq!(result_sub, expected_sub);
         }
     }
-
-
 }
