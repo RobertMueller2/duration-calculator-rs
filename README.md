@@ -19,14 +19,14 @@ To use `duration-calculator-rs`, run the compiled binary with the desired durati
   
 ```fish
 $ duration-calculator-rs "3d 20h 10m 15s"
-92h10m15s
+92h 10m 15s
 
 $ echo -e "2d 5h\n-20m" | duration-calculator-rs
-52h40m
+52h 40m 00s
 
 $ echo -e "2d 5h\n-20m" | duration-calculator-rs 23m - 15s
-52h40m0s
-53h2m45s
+52h 40m 00s
+53h 02m 45s
 ```
   
 Note that when using both, an intermediate result is displayed for stdin and then the total result for both stdin and arguments.
@@ -71,11 +71,12 @@ Tuesday
   
 Now I mark the last 5 lines, use `:'<,'>DurationCalc +21h10m13s` and I get
 ```
-22h28m30s
-43h38m43s
+22h 28m 30s
+43h 38m 43s
 ```
 
 ![Use case demonstration](/img/output1.gif?raw=true)
+(Please note I have changed the padding since the demo.)
 
 p.S.: I'm not really using this for work, although the example might suggest otherwise. For work I'm happy to recommend [Timesheet](https://timesheet.io/). ;)
 

@@ -6,20 +6,22 @@
 ///
 /// ```fish
 /// $ ./duration-calculator-rs "3d 20h 10m 15s"
-/// 92h10m15s
+/// 92h 10m 15s
 ///
 /// $ echo "2d 5h" | ./duration-calculator-rs
-/// 53h0m0s
+/// 53h 00m 00s
 ///
 /// $ ./duration-calculator-rs "-1y 3h 40m"
-/// -364d20h20m0s
+/// -8763h 40m 00s
 ///
 /// Process both stdin and arguments:
 ///  $  echo -e "24h\n24m" | ./duration-calculator-rs 25m
-/// 24h24m0s
-/// 24h49m0s
+/// 24h 24m 00s
+/// 24h 49m 00s
 /// ```
+use std::cmp::Ordering;
 use std::env;
+use std::fmt;
 use std::io::{self, BufRead};
 use std::str::FromStr;
 
@@ -45,39 +47,40 @@ fn main() {
         }
 
         printed = true;
-        d.print();
-        println!();
+        println!("{}", DisplayableDuration(d));
     }
 
-    let d_args = Duration::from_str(&arg_str)
+    let d_from_args = Duration::from_str(&arg_str)
         .unwrap_or_else(|| panic!("cannot parse {:?} from arguments as duration", &arg_str));
 
     // don't print 0 if there is already a result from stdin
-    if d_args != Duration::zero() || !printed {
-        d = d.saturated_add(&d_args);
-        d.print();
+    if d_from_args != Duration::zero() || !printed {
+        d = d.saturated_add(&d_from_args);
+        println!("{}", DisplayableDuration(d));
     }
 }
 
-/// A trait for printing durations in a human-readable format.
-/* FIXME: formatting */
-trait DurationPrint {
-    /// Prints the duration in a human-readable format.
-    fn print(self);
-}
+pub struct DisplayableDuration(pub Duration);
 
-impl DurationPrint for Duration {
-    fn print(mut self) {
-        if self < Duration::zero() {
-            print!("-");
-            self = self * -1;
-        }
+impl fmt::Display for DisplayableDuration {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let sgn = match Duration::zero().cmp(&self.0) {
+            /* so, er, if 0 is greater than the duration, the sign is negative. I'm
+            deleting this from working memory and hopefully never have to look again.
+            */
+            Ordering::Greater => -1,
+            _ => 1 
+        };
 
-        let n = self.num_seconds();
+        /*  if the duration is negative, display sign prefixing the whole duration,
+            but keep the portions positive. -2h-05m-20s looks odd, doesn't it?
+         */
+        let n = sgn * self.0.num_seconds();
+        let hours = n / 3600;
+        let minutes = (n % 3600) / 60;
+        let seconds = n % 60;
 
-        print!("{}h", n / 3600);
-        print!("{}m", (n % 3600) / 60);
-        print!("{}s", n % 60);
+        write!(f, "{}{}h {:02}m {:02}s", if sgn < 0 { "-" } else { "" }, hours, minutes, seconds)
     }
 }
 
