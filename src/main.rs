@@ -18,6 +18,11 @@
 ///  $  echo -e "24h\n24m" | ./duration-calculator-rs 25m
 /// 24h 24m 00s
 /// 24h 49m 00s
+/// 
+/// With options:
+///  $ echo 1m | target/release/duration-calculator-rs --compact --total-prefix total --stdin-sum-prefix today - 2m
+/// today 0h01m00s
+/// total -0h01m00s
 /// ```
 use std::cmp::Ordering;
 use std::env;
@@ -31,8 +36,67 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let arg_str = args[1..].join(" ");
+    let exe = env::args().nth(0).unwrap_or_default();
+    let args: Vec<String> = env::args().skip(1).collect();
+    let mut compact: bool = false;
+    let mut compactset :bool = false;
+
+    let mut stdin_total_prefix_open: bool = false;
+    let mut stdin_total_prefix = String::new();
+    let mut total_prefix_open :bool = false;
+    let mut total_prefix = String::new();
+
+    let mut args_duration = Vec::new();
+
+    for a in args {
+        match a.as_str() {
+            "-c" | "--compact" if compactset == false => {
+                compact = true;
+                compactset = true;
+            },
+            "-t" | "--total-prefix" if total_prefix.is_empty() => {
+                total_prefix_open = true;
+            },
+            "-s" | "--stdin-sum-prefix" if stdin_total_prefix.is_empty() => {
+                stdin_total_prefix_open = true;
+            },
+            "-c" | "--compact" | "-t" | "--total-prefix" | "-s" | "--stdin-sum-prefix" => {
+                eprintln!("{} provided more than once",a);
+                eprintln!();
+                print_usage_and_exit(&exe, 1);
+            },
+            _ if (total_prefix_open || stdin_total_prefix_open) && a.starts_with("-") => {
+                eprintln!("ambiguous prefix {}",a);
+                eprintln!();
+                print_usage_and_exit(&exe, 2);
+            },
+            _ if total_prefix_open => {
+                total_prefix_open = false;
+                total_prefix = a + " ";
+            },
+            _ if stdin_total_prefix_open => {
+                stdin_total_prefix_open = false;
+                stdin_total_prefix = a + " ";
+            },
+            _ => {
+                args_duration.push(a);
+            }
+        };
+    }
+
+    let arg_str = args_duration.join(" ");
+
+    if total_prefix_open {
+        eprintln!("error parsing total summary prefix");
+        eprintln!();
+        print_usage_and_exit(&exe, 3);
+    }
+
+    if stdin_total_prefix_open {
+        eprintln!("error parsing stdin_total summary prefix");
+        eprintln!();
+        print_usage_and_exit(&exe, 4);
+    }
 
     let mut d = Duration::zero();
     let mut printed: bool = false;
@@ -47,7 +111,7 @@ fn main() {
         }
 
         printed = true;
-        println!("{}", DisplayableDuration(d));
+        println!("{}{}", stdin_total_prefix, DisplayableDuration(d, compact));
     }
 
     let d_from_args = Duration::from_str(&arg_str)
@@ -56,11 +120,30 @@ fn main() {
     // don't print 0 if there is already a result from stdin
     if d_from_args != Duration::zero() || !printed {
         d = d.saturated_add(&d_from_args);
-        println!("{}", DisplayableDuration(d));
+        println!("{}{}", total_prefix, DisplayableDuration(d, compact));
     }
 }
 
-pub struct DisplayableDuration(pub Duration);
+fn print_usage_and_exit(exe: &str, errorlevel: i32) {
+    print_usage(exe);
+    std::process::exit(errorlevel);
+}
+
+fn print_usage(exe: &str) {
+    println!("Usage:");
+    println!("");
+    println!("{} [Options] [Duration String]", exe);
+    println!("");
+    println!("where Options:");
+    println!("-c|--compact\tCompact output");
+    println!("-t|--total-prefix <prefix>\tPrefix the end sum with <prefix>");
+    println!("-s|--stdin-sum-prefix <prefix>\tPrefix the stdin sum with <prefix>");
+}
+
+pub struct DisplayableDuration(
+    pub Duration,
+    pub bool
+);
 
 impl fmt::Display for DisplayableDuration {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -80,14 +163,26 @@ impl fmt::Display for DisplayableDuration {
         let minutes = (n % 3600) / 60;
         let seconds = n % 60;
 
-        write!(
-            f,
-            "{}{}h {:02}m {:02}s",
-            if sgn < 0 { "-" } else { "" },
-            hours,
-            minutes,
-            seconds
-        )
+        if self.1 {
+            write!(
+                f,
+                "{}{}h{:02}m{:02}s",
+                if sgn < 0 { "-" } else { "" },
+                hours,
+                minutes,
+                seconds
+            )
+        } 
+        else {
+            write!(
+                f,
+                "{}{}h {:02}m {:02}s",
+                if sgn < 0 { "-" } else { "" },
+                hours,
+                minutes,
+                seconds
+            )
+        }
     }
 }
 

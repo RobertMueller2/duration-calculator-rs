@@ -50,7 +50,7 @@ function! PipeThroughCommand(commandname, ...) range
     call append(a:lastline, l:output)
 endfunction
 
-com! -range -nargs=? DurationCalc :<line1>,<line2>call PipeThroughCommand("duration-calculator-rs", "<args>")
+com! -range -nargs=? DurationCalc :<line1>,<line2>call PipeThroughCommand("duration-calculator-rs -c -s today -t total", "<args>")
 ```
   
 This allows me to visually select a text block containing durations, press colon and enter DurationCalc as a command. Optionally I can pass last day's total duration as the argument.
@@ -71,8 +71,8 @@ Tuesday
   
 Now I mark the last 5 lines, use `:'<,'>DurationCalc +21h10m13s` and I get
 ```
-22h 28m 30s
-43h 38m 43s
+today 22h28m30s
+total 43h38m43s
 ```
 
 ![Use case demonstration](/img/output1.gif?raw=true)
