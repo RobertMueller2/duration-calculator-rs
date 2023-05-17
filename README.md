@@ -27,6 +27,10 @@ $ echo -e "2d 5h\n-20m" | duration-calculator-rs
 $ echo -e "2d 5h\n-20m" | duration-calculator-rs 23m - 15s
 52h 40m 00s
 53h 02m 45s
+
+$ echo 1m | target/release/duration-calculator-rs --compact --total-prefix total --stdin-sum-prefix today - 2m
+today 0h01m00s
+total -0h01m00s
 ```
   
 Note that when using both, an intermediate result is displayed for stdin and then the total result for both stdin and arguments.
@@ -42,15 +46,21 @@ I'm aware of Google Docs, M365 and Collabora and depending on the situation, I'm
 For convenience, I'm using this in my `.vimrc`:
 
 ```vim
-" pipe selection through command
+"pipe selection through command
 function! PipeThroughCommand(commandname, ...) range
     let l:args=get(a:, 1, "")
     let l:cmdline = 'echo -e '.shellescape(join(getline(a:firstline, a:lastline), '\n')).' | '.a:commandname ." " . l:args
     let l:output = systemlist(l:cmdline)
-    call append(a:lastline, l:output)
+    if v:shell_error != 0
+        echo output
+        return -1
+    endif
+    execute a:firstline . "," . a:lastline . "delete"
+    call append(a:firstline - 1, l:output)
 endfunction
 
 com! -range -nargs=? DurationCalc :<line1>,<line2>call PipeThroughCommand("duration-calculator-rs -c -s today -t total", "<args>")
+com! -nargs=+ DurationCalcS r!duration-calculator-rs -c -t total <args>
 ```
   
 This allows me to visually select a text block containing durations, press colon and enter DurationCalc as a command. Optionally I can pass last day's total duration as the argument.
