@@ -36,7 +36,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 fn main() {
-    let exe = env::args().nth(0).unwrap_or_default();
+    let exe = env::args().next().unwrap_or_default();
     let args: Vec<String> = env::args().skip(1).collect();
     let mut compact: bool = false;
     let mut compactset :bool = false;
@@ -50,7 +50,7 @@ fn main() {
 
     for a in args {
         match a.as_str() {
-            "-c" | "--compact" if compactset == false => {
+            "-c" | "--compact" if ! compactset => {
                 compact = true;
                 compactset = true;
             },
@@ -65,7 +65,7 @@ fn main() {
                 eprintln!();
                 print_usage_and_exit(&exe, 1);
             },
-            _ if (total_prefix_open || stdin_total_prefix_open) && a.starts_with("-") => {
+            _ if (total_prefix_open || stdin_total_prefix_open) && a.starts_with('-') => {
                 eprintln!("ambiguous prefix {}",a);
                 eprintln!();
                 print_usage_and_exit(&exe, 2);
@@ -131,9 +131,9 @@ fn print_usage_and_exit(exe: &str, errorlevel: i32) {
 
 fn print_usage(exe: &str) {
     println!("Usage:");
-    println!("");
+    println!();
     println!("{} [Options] [Duration String]", exe);
-    println!("");
+    println!();
     println!("where Options:");
     println!("-c|--compact\tCompact output");
     println!("-t|--total-prefix <prefix>\tPrefix the end sum with <prefix>");
