@@ -218,12 +218,12 @@ impl DurationParse for Duration {
     fn from_str(input: &str) -> Option<Duration> {
         lazy_static! {
             static ref LINE_PATTERN: Regex =
-                Regex::new(r#"^(?:\s*[+-]\s*(?:\d+\s*(?:y|d|h|m|s)\s*)+)+$"#).unwrap();
+                Regex::new(r"^(?:\s*[+-]\s*(?:\d+\s*(?:y|d|h|m|s)\s*)+)+$").unwrap();
             static ref DURATION_COMPOSITE_PATTERN: Regex =
-                Regex::new(r#"(?P<sign>[+-])\s*(?P<duration>\s*(?:\d+\s*(?:y|d|h|m|s)\s*)+)"#)
+                Regex::new(r"(?P<sign>[+-])\s*(?P<duration>\s*(?:\d+\s*(?:y|d|h|m|s)\s*)+)")
                     .unwrap();
             static ref DURATION_PATTERN: Regex =
-                Regex::new(r#"(?P<count>\d+)\s*(?P<unit>y|d|h|m|min|s)"#).unwrap();
+                Regex::new(r"(?P<count>\d+)\s*(?P<unit>y|d|h|m|min|s)").unwrap();
         }
 
         let mut duration = Duration::zero();
