@@ -27,7 +27,7 @@
 use std::cmp::Ordering;
 use std::env;
 use std::fmt;
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, IsTerminal};
 use std::str::FromStr;
 
 use chrono::Duration;
@@ -102,7 +102,7 @@ fn main() {
     let mut printed: bool = false;
 
     // read stdin only if there is a redirect
-    if atty::isnt(atty::Stream::Stdin) {
+    if !io::stdin().is_terminal() {
         for line in io::stdin().lock().lines() {
             let ls = line.unwrap_or_else(|_| panic!("IO error reading stdin"));
             let d_line =
