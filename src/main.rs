@@ -61,12 +61,12 @@ fn main() {
                 stdin_total_prefix_open = true;
             }
             "-c" | "--compact" | "-t" | "--total-prefix" | "-s" | "--stdin-sum-prefix" => {
-                eprintln!("{} provided more than once", a);
+                eprintln!("{a} provided more than once");
                 eprintln!();
                 print_usage_and_exit(&exe, 1);
             }
             _ if (total_prefix_open || stdin_total_prefix_open) && a.starts_with('-') => {
-                eprintln!("ambiguous prefix {}", a);
+                eprintln!("ambiguous prefix {a}");
                 eprintln!();
                 print_usage_and_exit(&exe, 2);
             }
@@ -132,7 +132,7 @@ fn print_usage_and_exit(exe: &str, errorlevel: i32) {
 fn print_usage(exe: &str) {
     println!("Usage:");
     println!();
-    println!("{} [Options] [Duration String]", exe);
+    println!("{exe} [Options] [Duration String]");
     println!();
     println!("where Options:");
     println!("-c|--compact\tCompact output");
